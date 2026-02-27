@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>三模块音频工作台</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">三模块音频工作台（独立版）</div>
+    <div class="hint">不改动 OctopusAI，独立部署</div>
+  </header>
+
+  <main class="layout">
+    <section class="left">
+      <div class="toolbar">
+        <label>选择AI应用：</label>
+        <select id="moduleSelect">
+          <option value="voice_design">个性化语音（语音设计）</option>
+          <option value="tts">语音生成（语音合成）</option>
+          <option value="env_audio">环境音效（视频环境音）</option>
+        </select>
+        <button id="refreshBtn" type="button">刷新</button>
+      </div>
+
+      <div class="panel" id="voiceDesignPanel">
+        <h3>个性化语音（语音设计）</h3>
+        <p class="desc">根据文本+语音设计指令生成语音，可选语言。</p>
+        <label>待合成文本 *</label>
+        <textarea id="vd_text">其实我真的有发现，我是一个特别善于观察别人情绪的人。</textarea>
+        <label>语音设计指令</label>
+        <input id="vd_instruct" type="text" value="用特别愤怒的语气说" />
+        <label>合成语言 *</label>
+        <select id="vd_language">
+          <option value="Chinese">中文</option>
+          <option value="English">英文</option>
+          <option value="Japanese">日语</option>
+          <option value="Korean">韩语</option>
+          <option value="Auto">自动识别</option>
+        </select>
+        <button class="submit" id="submitVoiceDesign">提交语音设计</button>
+      </div>
+
+      <div class="panel hidden" id="ttsPanel">
+        <h3>语音生成（语音合成）</h3>
+        <p class="desc">文本 + 参考音频（音色）+ 情绪向量控制。</p>
+        <label>输入文本 *</label>
+        <textarea id="tts_text_input">你好，欢迎使用IndexTTS2语音合成系统。</textarea>
+
+        <label>参考音频（音色） *</label>
+        <input id="tts_reference_audio" type="file" accept=".wav,.mp3,.flac,.m4a,.ogg" />
+
+        <div class="grid2">
+          <div><label>高兴</label><input id="emotion_happy" type="number" value="0" step="1" /></div>
+          <div><label>愤怒</label><input id="emotion_angry" type="number" value="0" step="1" /></div>
+          <div><label>悲伤</label><input id="emotion_sad" type="number" value="0" step="1" /></div>
+          <div><label>害怕</label><input id="emotion_fear" type="number" value="0" step="1" /></div>
+          <div><label>厌恶</label><input id="emotion_disgust" type="number" value="0" step="1" /></div>
+          <div><label>忧郁</label><input id="emotion_melancholy" type="number" value="0" step="1" /></div>
+          <div><label>惊讶</label><input id="emotion_surprise" type="number" value="0" step="1" /></div>
+          <div><label>平静</label><input id="emotion_calm" type="number" value="0" step="1" /></div>
+        </div>
+
+        <label>启用随机性</label>
+        <select id="tts_use_random">
+          <option value="False">否</option>
+          <option value="True">是</option>
+        </select>
+        <button class="submit" id="submitTts">提交语音合成</button>
+      </div>
+
+      <div class="panel hidden" id="envAudioPanel">
+        <h3>环境音效（视频环境音）</h3>
+        <p class="desc">上传视频并自动生成/混合环境音。</p>
+
+        <label>输入视频 *</label>
+        <input id="env_video" type="file" accept=".mp4,.avi,.mov,.mkv" />
+
+        <label>提示词（可选，引导生成的环境音类型）</label>
+        <textarea id="env_prompt">自然环境音,无任何人声,无音乐,无旋律。
+夏季树林环境,持续的蝉鸣声,零星鸟叫。
+仅环境噪声,不包含哼唱、吟唱、歌声、旋律性声音。</textarea>
+
+        <label>负面提示词（可选，避免生成的内容）</label>
+        <textarea id="env_negative_prompt">音乐, 人声, 对话, 说话, 语音, 语言, 单词, 交谈, 聊天, 哼唱, 吟唱, 歌声, 歌唱, 旋律, 旋律性声音, 歌曲, 唱歌, 演唱, 哼, 哼歌, 口哨</textarea>
+
+        <div class="grid2">
+          <div>
+            <label>音频混合模式</label>
+            <select id="env_audio_mix_mode">
+              <option value="mix">混合模式（保留原视频背景音乐）</option>
+              <option value="replace">替换模式（替换原视频音频）</option>
+            </select>
+          </div>
+          <div>
+            <label>环境音量（混合模式）</label>
+            <select id="env_ambient_volume">
+              <option value="0.15">0.15（极低）</option>
+              <option value="0.25" selected>0.25（低，推荐）</option>
+              <option value="0.35">0.35（中等）</option>
+              <option value="0.5">0.5（较高）</option>
+            </select>
+          </div>
+          <div>
+            <label>背景音乐音量（混合模式）</label>
+            <select id="env_bgm_volume">
+              <option value="0.2">0.2（低）</option>
+              <option value="0.3" selected>0.3（中等，推荐）</option>
+              <option value="0.4">0.4（较高）</option>
+              <option value="0.5">0.5（高）</option>
+            </select>
+          </div>
+          <div>
+            <label>生成步数</label>
+            <select id="env_num_steps">
+              <option value="15">15 步（快速）</option>
+              <option value="25" selected>25 步（默认）</option>
+              <option value="50">50 步（慢速，高质量）</option>
+            </select>
+          </div>
+          <div>
+            <label>引导强度</label>
+            <select id="env_cfg_strength">
+              <option value="3.0">3.0（低引导）</option>
+              <option value="4.5" selected>4.5（默认）</option>
+              <option value="6.0">6.0（高引导）</option>
+            </select>
+          </div>
+        </div>
+        <button class="submit" id="submitEnvAudio">提交环境音任务</button>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="panel">
+        <h3>执行流程</h3>
+        <div id="queueInfo">加载中...</div>
+      </div>
+      <div class="panel">
+        <h3>任务记录</h3>
+        <div id="taskList" class="task-list"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

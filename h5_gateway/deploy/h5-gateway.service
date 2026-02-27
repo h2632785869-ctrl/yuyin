@@ -1,0 +1,21 @@
+[Unit]
+Description=H5 Gateway FastAPI Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/h5_gateway
+Environment=APP_HOST=0.0.0.0
+Environment=APP_PORT=8000
+Environment=APP_WORKERS=1
+Environment=VOICE_DESIGN_URL=http://127.0.0.1:9001/infer
+Environment=TTS_URL=http://127.0.0.1:9002/infer
+Environment=ENV_AUDIO_URL=http://127.0.0.1:9003/infer
+ExecStart=/opt/h5_gateway/deploy/start.sh
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
