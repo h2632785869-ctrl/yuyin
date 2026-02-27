@@ -8,29 +8,22 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="title">三模块音频工作台（独立版）</div>
-    <div class="hint">不改动 OctopusAI，独立部署</div>
+    <div>
+      <div class="title">三模块音频工作台</div>
+      <div class="hint">不改动 OctopusAI，独立部署</div>
+    </div>
+    <button id="refreshBtn" type="button" class="refresh-btn">刷新状态</button>
   </header>
 
   <main class="layout">
-    <section class="left">
-      <div class="toolbar">
-        <label>选择AI应用：</label>
-        <select id="moduleSelect">
-          <option value="voice_design">个性化语音（语音设计）</option>
-          <option value="tts">语音生成（语音合成）</option>
-          <option value="env_audio">环境音效（视频环境音）</option>
-        </select>
-        <button id="refreshBtn" type="button">刷新</button>
-      </div>
-
-      <div class="panel" id="voiceDesignPanel">
-        <h3>个性化语音（语音设计）</h3>
-        <p class="desc">根据文本+语音设计指令生成语音，可选语言。</p>
+    <section class="modules-grid">
+      <div class="panel module-card" id="voiceDesignPanel">
+        <h3 class="panel-title">个性化语音（语音设计）</h3>
+        <p class="desc">根据文本和语音设计指令生成语音。</p>
         <label>待合成文本 *</label>
         <textarea id="vd_text">其实我真的有发现，我是一个特别善于观察别人情绪的人。</textarea>
         <label>语音设计指令</label>
-        <input id="vd_instruct" type="text" value="用特别愤怒的语气说" />
+        <textarea id="vd_instruct" rows="3">用特别愤怒的语气说</textarea>
         <label>合成语言 *</label>
         <select id="vd_language">
           <option value="Chinese">中文</option>
@@ -42,9 +35,9 @@
         <button class="submit" id="submitVoiceDesign">提交语音设计</button>
       </div>
 
-      <div class="panel hidden" id="ttsPanel">
-        <h3>语音生成（语音合成）</h3>
-        <p class="desc">文本 + 参考音频（音色）+ 情绪向量控制。</p>
+      <div class="panel module-card" id="ttsPanel">
+        <h3 class="panel-title">语音生成（语音合成）</h3>
+        <p class="desc">文本 + 参考音频（音色）+ 情绪控制。</p>
         <label>输入文本 *</label>
         <textarea id="tts_text_input">你好，欢迎使用IndexTTS2语音合成系统。</textarea>
 
@@ -70,19 +63,19 @@
         <button class="submit" id="submitTts">提交语音合成</button>
       </div>
 
-      <div class="panel hidden" id="envAudioPanel">
-        <h3>环境音效（视频环境音）</h3>
+      <div class="panel module-card" id="envAudioPanel">
+        <h3 class="panel-title">环境音效（视频环境音）</h3>
         <p class="desc">上传视频并自动生成/混合环境音。</p>
 
         <label>输入视频 *</label>
         <input id="env_video" type="file" accept=".mp4,.avi,.mov,.mkv" />
 
-        <label>提示词（可选，引导生成的环境音类型）</label>
+        <label>提示词（可选，引导环境音类型）</label>
         <textarea id="env_prompt">自然环境音,无任何人声,无音乐,无旋律。
 夏季树林环境,持续的蝉鸣声,零星鸟叫。
 仅环境噪声,不包含哼唱、吟唱、歌声、旋律性声音。</textarea>
 
-        <label>负面提示词（可选，避免生成的内容）</label>
+        <label>负面提示词（可选，避免生成内容）</label>
         <textarea id="env_negative_prompt">音乐, 人声, 对话, 说话, 语音, 语言, 单词, 交谈, 聊天, 哼唱, 吟唱, 歌声, 歌唱, 旋律, 旋律性声音, 歌曲, 唱歌, 演唱, 哼, 哼歌, 口哨</textarea>
 
         <div class="grid2">
@@ -132,16 +125,16 @@
       </div>
     </section>
 
-    <aside class="right">
-      <div class="panel">
+    <section class="status-grid">
+      <div class="panel status-card">
         <h3>执行流程</h3>
         <div id="queueInfo">加载中...</div>
       </div>
-      <div class="panel">
+      <div class="panel status-card">
         <h3>任务记录</h3>
         <div id="taskList" class="task-list"></div>
       </div>
-    </aside>
+    </section>
   </main>
 
   <script src="/static/app.js"></script>

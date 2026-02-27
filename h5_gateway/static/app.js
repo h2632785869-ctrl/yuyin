@@ -1,26 +1,10 @@
-const moduleSelect = document.getElementById("moduleSelect");
-const panels = {
-  voice_design: document.getElementById("voiceDesignPanel"),
-  tts: document.getElementById("ttsPanel"),
-  env_audio: document.getElementById("envAudioPanel"),
-};
-
 const queueInfo = document.getElementById("queueInfo");
 const taskList = document.getElementById("taskList");
 const refreshBtn = document.getElementById("refreshBtn");
 
 const tasks = new Map();
 let pollTimer = null;
-
-function switchModule(moduleId) {
-  Object.entries(panels).forEach(([id, panel]) => {
-    panel.classList.toggle("hidden", id !== moduleId);
-  });
-}
-
-moduleSelect.addEventListener("change", (e) => switchModule(e.target.value));
 refreshBtn.addEventListener("click", refreshAll);
-switchModule(moduleSelect.value);
 
 async function postForm(url, formData) {
   const res = await fetch(url, { method: "POST", body: formData });
