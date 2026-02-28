@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import subprocess
 import shutil
 import time
 import uuid
@@ -25,9 +26,9 @@ UPLOAD_DIR = BASE_DIR / "uploads"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-VOICE_DESIGN_URL = os.getenv("VOICE_DESIGN_URL", "http://127.0.0.1:9001/infer")
-TTS_URL = os.getenv("TTS_URL", "http://127.0.0.1:9002/infer")
-ENV_AUDIO_URL = os.getenv("ENV_AUDIO_URL", "http://127.0.0.1:9003/infer")
+VOICE_DESIGN_URL = os.getenv("VOICE_DESIGN_URL", "http://127.0.0.1:9101/infer")
+TTS_URL = os.getenv("TTS_URL", "http://127.0.0.1:9102/infer")
+ENV_AUDIO_URL = os.getenv("ENV_AUDIO_URL", "http://127.0.0.1:9103/infer")
 
 # 如果你的服务接收字段名不同，直接改环境变量即可。
 VOICE_DESIGN_TEXT_FIELD = os.getenv("VOICE_DESIGN_TEXT_FIELD", "text")
@@ -85,6 +86,28 @@ task_store: Dict[str, TaskRecord] = {}
 task_queue: asyncio.Queue[str] = asyncio.Queue()
 running_task_id: Optional[str] = None
 worker_handle: Optional[asyncio.Task[None]] = None
+
+
+def release_gpu_memory() -> None:
+    """
+    尝试在每个任务后回收显存。
+    即使当前环境没有 torch，也不影响主流程。
+    """
+    try:
+        subprocess.run(
+            [
+                "python3",
+                "-c",
+                "import torch; torch.cuda.empty_cache(); print('cuda cache cleared')",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except Exception:
+        # 清理失败不应影响队列执行
+        pass
 
 
 def save_upload(task_id: str, upload: UploadFile, subdir: str) -> str:
@@ -211,6 +234,7 @@ async def worker_loop() -> None:
             record.error = f"{type(exc).__name__}: {exc}"
         finally:
             record.finished_at = time.time()
+            release_gpu_memory()
             running_task_id = None
             task_queue.task_done()
 
