@@ -9,9 +9,9 @@ WorkingDirectory=/opt/h5_gateway
 Environment=APP_HOST=0.0.0.0
 Environment=APP_PORT=8000
 Environment=APP_WORKERS=1
-Environment=VOICE_DESIGN_URL=http://127.0.0.1:9001/infer
-Environment=TTS_URL=http://127.0.0.1:9002/infer
-Environment=ENV_AUDIO_URL=http://127.0.0.1:9003/infer
+Environment=VOICE_DESIGN_URL=http://127.0.0.1:9101/infer
+Environment=TTS_URL=http://127.0.0.1:9102/infer
+Environment=ENV_AUDIO_URL=http://127.0.0.1:9103/infer
 ExecStart=/opt/h5_gateway/deploy/start.sh
 Restart=always
 RestartSec=3
