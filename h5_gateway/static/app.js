@@ -1,10 +1,26 @@
-const queueInfo = document.getElementById("queueInfo");
-const taskList = document.getElementById("taskList");
-const refreshBtn = document.getElementById("refreshBtn");
+const toast = document.getElementById("toast");
+const resultModal = document.getElementById("resultModal");
+const resultTitle = document.getElementById("resultTitle");
+const resultMeta = document.getElementById("resultMeta");
+const resultViewer = document.getElementById("resultViewer");
+const resultDownload = document.getElementById("resultDownload");
+const closeResultModal = document.getElementById("closeResultModal");
 
 const tasks = new Map();
+const shownResultTaskIds = new Set();
 let pollTimer = null;
-refreshBtn.addEventListener("click", refreshAll);
+
+closeResultModal.addEventListener("click", () => {
+  resultModal.classList.add("hidden");
+  resultViewer.innerHTML = "";
+});
+
+resultModal.addEventListener("click", (e) => {
+  if (e.target === resultModal) {
+    resultModal.classList.add("hidden");
+    resultViewer.innerHTML = "";
+  }
+});
 
 async function postForm(url, formData) {
   const res = await fetch(url, { method: "POST", body: formData });
@@ -28,7 +44,7 @@ async function submitVoiceDesign() {
   fd.append("language", language);
   const data = await postForm("/api/submit/voice-design", fd);
   tasks.set(data.task_id, { task_id: data.task_id, status: "queued", module: "voice_design" });
-  renderTasks();
+  showToast(`语音设计任务已进入队列（${data.task_id.slice(0, 8)}）`);
 }
 
 async function submitTts() {
@@ -51,7 +67,7 @@ async function submitTts() {
   fd.append("use_random", document.getElementById("tts_use_random").value);
   const data = await postForm("/api/submit/tts", fd);
   tasks.set(data.task_id, { task_id: data.task_id, status: "queued", module: "tts" });
-  renderTasks();
+  showToast(`语音合成任务已进入队列（${data.task_id.slice(0, 8)}）`);
 }
 
 async function submitEnvAudio() {
@@ -71,15 +87,17 @@ async function submitEnvAudio() {
   fd.append("cfg_strength", document.getElementById("env_cfg_strength").value);
   const data = await postForm("/api/submit/env-audio", fd);
   tasks.set(data.task_id, { task_id: data.task_id, status: "queued", module: "env_audio" });
-  renderTasks();
+  showToast(`环境音任务已进入队列（${data.task_id.slice(0, 8)}）`);
 }
 
 async function refreshQueue() {
   const res = await fetch("/api/queue");
   const data = await res.json();
-  queueInfo.textContent =
-    `队列中: ${data.queue_size} | 运行中: ${data.running_task_id || "无"} | ` +
-    `统计: queued=${data.totals.queued}, running=${data.totals.running}, done=${data.totals.done}, failed=${data.totals.failed}`;
+  const queued = data.totals?.queued || 0;
+  const running = data.totals?.running || 0;
+  if (queued + running > 0) {
+    showToast(`队列中 ${queued} 个，运行中 ${running} 个`);
+  }
 }
 
 async function refreshTasks() {
@@ -88,9 +106,15 @@ async function refreshTasks() {
     const res = await fetch(`/api/task/${taskId}`);
     if (!res.ok) continue;
     const data = await res.json();
+    const prev = tasks.get(taskId);
     tasks.set(taskId, data);
+    if (prev && prev.status !== "done" && data.status === "done") {
+      showResultIfAny(data);
+    }
+    if (prev && prev.status !== "failed" && data.status === "failed") {
+      showToast(`${moduleName(data.module)}任务失败：${data.error || "未知错误"}`);
+    }
   }
-  renderTasks();
 }
 
 function moduleName(id) {
@@ -100,36 +124,47 @@ function moduleName(id) {
   return id;
 }
 
-function renderTasks() {
-  const ordered = Array.from(tasks.values()).sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
-  if (!ordered.length) {
-    taskList.innerHTML = "<div class='task-body'>暂无任务</div>";
+function showToast(message) {
+  if (!toast) {
     return;
   }
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+  window.clearTimeout(showToast._timer);
+  showToast._timer = window.setTimeout(() => toast.classList.add("hidden"), 2500);
+}
 
-  taskList.innerHTML = ordered
-    .map((t) => {
-      const createdAt = t.created_at ? new Date(t.created_at * 1000).toLocaleString() : "-";
-      const download = t.download_url ? `<a class="download-link" href="${t.download_url}" target="_blank">下载结果</a>` : "";
-      const err = t.error ? `<div>错误: ${escapeHtml(String(t.error))}</div>` : "";
-      const result = t.result ? `<div>结果: ${escapeHtml(JSON.stringify(t.result))}</div>` : "";
-      return `
-        <div class="task-item">
-          <div class="task-head">
-            <span>${moduleName(t.module)}</span>
-            <span class="status ${t.status}">${t.status}</span>
-          </div>
-          <div class="task-body">
-            <div>ID: ${t.task_id}</div>
-            <div>创建时间: ${createdAt}</div>
-            ${download}
-            ${err}
-            ${result}
-          </div>
-        </div>
-      `;
-    })
-    .join("");
+function inferMediaType(fileName = "") {
+  const lower = String(fileName).toLowerCase();
+  if (/\.(wav|mp3|m4a|aac|flac|ogg)$/.test(lower)) return "audio";
+  if (/\.(mp4|mov|mkv|webm|avi)$/.test(lower)) return "video";
+  if (/\.(png|jpg|jpeg|gif|webp|bmp)$/.test(lower)) return "image";
+  return "other";
+}
+
+function showResultIfAny(task) {
+  if (!task.download_url || shownResultTaskIds.has(task.task_id)) {
+    return;
+  }
+  shownResultTaskIds.add(task.task_id);
+
+  const mediaType = inferMediaType(task.output_file_name || "");
+  const mediaUrl = task.download_url;
+  resultTitle.textContent = `${moduleName(task.module)}任务完成`;
+  resultMeta.textContent = `任务ID: ${task.task_id} | 文件: ${task.output_file_name || "result"}`;
+  resultDownload.href = mediaUrl;
+  resultViewer.innerHTML = "";
+
+  if (mediaType === "audio") {
+    resultViewer.innerHTML = `<audio controls autoplay src="${mediaUrl}"></audio>`;
+  } else if (mediaType === "video") {
+    resultViewer.innerHTML = `<video controls autoplay src="${mediaUrl}"></video>`;
+  } else if (mediaType === "image") {
+    resultViewer.innerHTML = `<img src="${mediaUrl}" alt="result image" />`;
+  } else {
+    resultViewer.innerHTML = `<div>任务已完成，点击下方按钮下载结果文件。</div>`;
+  }
+  resultModal.classList.remove("hidden");
 }
 
 function escapeHtml(str) {
@@ -146,7 +181,7 @@ async function refreshAll() {
     await refreshQueue();
     await refreshTasks();
   } catch (err) {
-    queueInfo.textContent = `刷新失败: ${String(err)}`;
+    showToast(`刷新失败: ${String(err)}`);
   }
 }
 

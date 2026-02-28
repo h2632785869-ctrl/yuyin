@@ -7,14 +7,6 @@
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <div class="title">三模块音频工作台</div>
-      <div class="hint">不改动 OctopusAI，独立部署</div>
-    </div>
-    <button id="refreshBtn" type="button" class="refresh-btn">刷新状态</button>
-  </header>
-
   <main class="layout">
     <section class="modules-grid">
       <div class="panel module-card" id="voiceDesignPanel">
@@ -124,18 +116,19 @@
         <button class="submit" id="submitEnvAudio">提交环境音任务</button>
       </div>
     </section>
-
-    <section class="status-grid">
-      <div class="panel status-card">
-        <h3>执行流程</h3>
-        <div id="queueInfo">加载中...</div>
-      </div>
-      <div class="panel status-card">
-        <h3>任务记录</h3>
-        <div id="taskList" class="task-list"></div>
-      </div>
-    </section>
   </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="resultModal" class="result-modal hidden">
+    <div class="result-card">
+      <button id="closeResultModal" class="close-btn" type="button">x</button>
+      <h3 id="resultTitle">任务结果</h3>
+      <div id="resultMeta" class="result-meta"></div>
+      <div id="resultViewer" class="result-viewer"></div>
+      <a id="resultDownload" class="result-download" href="#" target="_blank">下载文件</a>
+    </div>
+  </div>
 
   <script src="/static/app.js"></script>
 </body>
